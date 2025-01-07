@@ -2,9 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cafe&Wifi API</title>
+    <title>Cafe & Wifi API</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the CSS file -->
+    <script>
+        async function addCafe(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const response = await fetch('/add', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            document.getElementById('add-result').innerText = JSON.stringify(result);
+        }
+
+        async function updatePrice(event) {
+            event.preventDefault();
+            const cafeId = document.getElementById('update-cafe-id').value;
+            const newPrice = document.getElementById('new-price').value;
+            const response = await fetch(`/update-price/${cafeId}?new_price=${newPrice}`, {
+                method: 'PATCH'
+            });
+            const result = await response.json();
+            document.getElementById('update-result').innerText = JSON.stringify(result);
+        }
+
+        async function deleteCafe(event) {
+            event.preventDefault();
+            const cafeId = document.getElementById('delete-cafe-id').value;
+            const apiKey = document.getElementById('delete-api-key').value;
+            const response = await fetch(`/report-closed/${cafeId}?api-key=${apiKey}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            document.getElementById('delete-result').innerText = JSON.stringify(result);
+        }
+
+        async function fetchAllCafes() {
+            const response = await fetch('/all');
+            const result = await response.json();
+            displayCafes(result.cafes);
+        }
+
+        function displayCafes(cafes) {
+            const tableBody = document.getElementById('cafes-table-body');
+            tableBody.innerHTML = ''; // Clear existing table rows
+
+            cafes.forEach(cafe => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cafe.id}</td>
+                    <td>${cafe.name}</td>
+                    <td>${cafe.location}</td>
+                    <td>${cafe.seats}</td>
+                    <td><img src="${cafe.img_url}" alt="${cafe.name}" style="width: 50px; height: auto;"></td>
+                    <td><a href="${cafe.map_url}" target="_blank">View Map</a></td>
+                    <td>${cafe.has_wifi ? 'Yes' : 'No'}</td>
+                    <td>${cafe.has_toilet ? 'Yes' : 'No'}</td>
+                    <td>${cafe.has_sockets ? 'Yes' : 'No'}</td>
+                    <td>${cafe.can_take_calls ? 'Yes' : 'No'}</td>
+                    <td>${cafe.coffee_price}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
 </head>
 <body>
     <h1>Welcome to the Cafe & Wifi API</h1>
+
+    <h2>Add a Cafe</h2>
+    <form onsubmit="addCafe(event)">
+        <input type="text" name="name" placeholder="Cafe Name" required>
+        <input type="text" name="location" placeholder="Location" required>
+        <input type="text" name="seats" placeholder="Seats" required>
+        <input type="text" name="img_url" placeholder="Image URL" required>
+        <input type="text" name="map_url" placeholder="Map URL" required>
+        <input type="text" name="coffee_price" placeholder="Coffee Price" required>
+        <label><input type="checkbox" name="has_wifi"> Has Wifi</label>
+        <label><input type="checkbox" name="has_toilet"> Has Toilet</label>
+        <label><input type="checkbox" name="has_sockets"> Has Sockets</label>
+        <label><input type="checkbox" name="can_take_calls"> Can Take Calls</label>
+        <button type="submit">Add Cafe</button>
+    </form>
+    <div id="add-result"></div>
+
+    <h2>Update Cafe Price</h2>
+    <form onsubmit="updatePrice(event)">
+        <input type="number" id="update-cafe-id" placeholder="Cafe ID" required>
+        <input type="text" id="new-price" placeholder="New Price" required>
+        <button type="submit">Update Price</button>
+    </form>
+    <div id="update-result"></div>
+
+    <h2>Delete a Cafe</h2>
+    <form onsubmit="deleteCafe(event)">
+        <input type="number" id="delete-cafe-id" placeholder="Cafe ID" required>
+        <input type="text" id="delete-api-key" placeholder="API Key" required>
+        <button type="submit">Delete Cafe</button>
+    </form>
+    <div id="delete-result"></div>
+
+    <h2>View All Cafes</h2>
+    <button onclick="fetchAllCafes()">Show All Cafes</button>
+    <div id="all-cafes-result">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Seats</th>
+                    <th>Image</th>
+                    <th>Map</th>
+                    <th>Has Wifi</th>
+                    <th>Has Toilet</th>
+                    <th>Has Sockets</th>
+                    <th>Can Take Calls</th>
+                    <th>Coffee Price</th>
+                </tr>
+            </thead>
+            <tbody id="cafes-table-body">
+                <!-- Cafe rows will be inserted here -->
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
