@@ -122,10 +122,17 @@ def post_new_cafe():
             db.session.commit()
         return jsonify(response={"success": "Successfully added the new cafe."})
 
-@app.route("/update-price/<int:cafe_id>", methods=["PATCH", "GET"])
+@app.route("/update-price/<int:cafe_id>", methods=["PATCH"])
 def update_price(cafe_id):
-    new_price = float(request.args.get("new_price"))
-    formatted_price = str("{:.2f}".format(new_price))
+    new_price = request.args.get("new_price")
+    if new_price is None:
+        return jsonify(error={"Bad Request": "New price is required."}), 400
+
+    try:
+        new_price = float(new_price)
+        formatted_price = str("{:.2f}".format(new_price))
+    except ValueError:
+        return jsonify(error={"Bad Request": "Invalid price format."}), 400
 
     cafe_to_update = db.session.get(Cafe, cafe_id)
     if cafe_to_update:
@@ -135,19 +142,19 @@ def update_price(cafe_id):
     else:
         return jsonify(error={"Bad Request": "The cafe's id is invalid."}), 404
 
-@app.route("/report-closed/<int:cafe_id>")
+@app.route("/report-closed/<int:cafe_id>", methods=["DELETE"])
 def delete_cafe(cafe_id):
     key = request.args.get("api-key")
     if key != API_KEY:
         return jsonify(error={"Error": "Sorry, that's not allowed, make sure that you have the correct api key."}), 403
+
+    cafe_to_delete = db.session.get(Cafe, cafe_id)
+    if cafe_to_delete:
+        db.session.delete(cafe_to_delete)
+        db.session.commit()
+        return jsonify(response={"success": "Successfully deleted the cafe."}), 200
     else:
-        cafe_to_delete = db.session.get(Cafe, cafe_id)
-        if cafe_to_delete:
-            db.session.delete(cafe_to_delete)
-            db.session.commit()
-            return jsonify(response={"success": "Successfully deleted the cafe."}), 200
-        else:
-            return jsonify(error={"Bad Request": "The cafe's id is invalid."}), 404
+        return jsonify(error={"Bad Request": "The cafe's id is invalid."}), 404
         
 if __name__ == '__main__':
     app.run(debug=True)
